@@ -8,6 +8,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <filesystem>
 
 #include "compiler.hpp"
 
@@ -81,28 +82,44 @@ Q_INVOKABLE QString Backend::assemble_str(const QString &inputText) {
     return QString::fromStdString(gen_asm(prog));
 }
 
+Q_INVOKABLE QString Backend::checkFile(const QString &inputText) {
+    std::ifstream f("./tmp_save.txt");
 
-// ./brouss ; ./out ; echo $?
-int Backend::launch(const QString &inputText) {
-    std::string contents = inputText.toStdString();
-    //std::cout << contents << std::endl;
+    if (f.good()) { // exists
+        QString qtokens;
+        QTextStream stream(&qtokens);
+        std::string strInput{};
 
-    std::vector<Token> tokens = gen_token(contents);
-    //std::cout << tokens.size() << std::endl;
-    //for (Token token : tokens) {
-    //std::cout << to_string(token.type) << std::endl;
-    //}
+        while (std::getline(f, strInput))
+            stream << QString::fromStdString(strInput) << '\n';
+        return qtokens;
+    } else {
+        std::ofstream outf{ "tmp_save.txt", std::ios::out };
 
-    Parser parser(std::move(tokens));
-    std::optional<NodeProg> prog = gen_parse(parser);
-    Generator generator(prog.value());
-    {
-        std::fstream file("out.asm", std::ios::out);
-        file << generator.gen_prog();
+        if (!outf) {
+            std::cerr << "Uh oh, Sample.txt could not be opened for writing!\n";
+        }
+
+        outf << inputText.toStdString();
+        return inputText;
     }
+    f.close();
+}
 
-    system("nasm -felf64 out.asm");
-    system("ld -o out out.o");
+Q_INVOKABLE QString Backend::deleteFile(const QString &inputText) {
+    std::ifstream f{ "./tmp_save.txt" };
 
-    return 0;
+    if (f.good()) {
+        QString qtokens;
+        QTextStream stream(&qtokens);
+        std::string strInput{};
+
+        while (std::getline(f, strInput))
+            stream << QString::fromStdString(strInput) << '\n';
+
+        std::filesystem::remove("./tmp_save.txt");
+        return qtokens;
+    } else {
+        return inputText;
+    }
 }

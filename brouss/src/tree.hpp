@@ -74,8 +74,11 @@ struct Tree {
         for (int i = 0; i < depth; ++i) stream << "  ";
         if (depth > 0) stream << "|- ";
 
-        // 2. Node Data
-        stream << QString::fromStdString(to_string2(tok.type)) << "\n";
+        if (tok.value.has_value()) {
+            stream << QString::fromStdString(tok.value.value()) << ": " << QString::fromStdString(to_string2(tok.type)) << "\n";
+        } else {
+            stream << QString::fromStdString(to_string2(tok.type)) << "\n";
+        }
 
         // 3. Recursion
         for (const Tree& child : children) {
